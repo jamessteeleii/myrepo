@@ -4,15 +4,19 @@ author: "James Steele"
 date: "27/12/2021"
 output: github_document
 ---
+## Open the pacakages
+We load using the **library** function all the packages we need to use
 ```{r, eval=TRUE}
 library(faux)
 library(tidyverse)
 library(lme4)
 library(ggeffects)
 library(patchwork)
-library(sjPlot)
+```
 
-# define parameters
+
+Now we define the parameters of our growth model
+```{r, eval=TRUE}
 ID = 100  # number of subjects
 b0 = 100       # intercept
 b1 = 10       # fixed slope of log(time)
@@ -20,26 +24,40 @@ u0s_sd = 30   # random intercept SD for subjects
 u1i_sd = 10   # random slope SD for log(time)
 r01i = 0     # correlation between random effects
 sigma_sd = 10 # error SD
+```
 
+Then we simulate it using functions from **faux**
+
+
+```{r, eval=TRUE}
 sim1 <- add_random(ID = ID) %>%
   add_within("ID", time = c(1:500)) %>%
   mutate(time = as.numeric(time)) %>%
   add_ranef("ID", u0i = u0s_sd, u1i = u1i_sd, .cors = r01i) %>%
   add_ranef(sigma = sigma_sd) %>%
   mutate(strength = (b0 + u0i) + ((b1 + u1i)*log(time)) + sigma)
+```
 
-# We'll fit a mixed effects model to the simulated data to get the predicted model to plot
+We'll fit a mixed effects model to the simulated data
+```{r, eval=TRUE}
 model1 <- lmer(strength ~ log(time) + (time | ID), data = sim1,
                control = lmerControl(optimizer = "Nelder_Mead"))
+```
 
+Then we use **ggeffects::ggpredict** to get the predicted values from the model
+```{r, eval=TRUE}
 marginal1 <- ggpredict(model1, terms = c("time [1:500 by=1]")) %>%
   mutate(model = "A")
+```
 
-plot1 <- sim1 %>% ggplot() +
+Finally, we'll create a plot to show the simulated model
+```{r}
+sim1 %>% ggplot() +
   geom_line(data = marginal1, aes(x=x, y= predicted), size = 1) +
   scale_x_continuous(limits = c(0,500)) +
   scale_y_continuous(limits = c(0,200)) +
   labs(x = "Time", y = "Strength") +
   theme_classic()
 ```
+
 
