@@ -2,7 +2,7 @@
 title: "Hello World"
 author: "James Steele"
 date: "27/12/2021"
-output: github_document
+output: pdf_document
 ---
 ## Open the pacakages
 We load using the **library** function all the packages we need to use
